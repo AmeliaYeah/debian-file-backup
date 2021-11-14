@@ -1,6 +1,7 @@
 import colorama, time, sys, os
 registry = "/etc/debian-disk-backup.reg"
 backup_true_directory_var = "BACKUP_TRUE_PWD"
+backup_loc_name = "/usr/share/debian-files-backup"
 
 def pretty_print(msg, type=None):
     msg_icon = colorama.Fore.GREEN+"+"
@@ -80,7 +81,8 @@ def parse_shorthand_directory(dir):
 valid_locations_delim = ">>SPLIT<<"
 base_registered = [
     registry+valid_locations_delim+"file",
-    "/etc/apt/sources.list"+valid_locations_delim+"file"
+    "/etc/apt/sources.list"+valid_locations_delim+"file",
+    backup_loc_name+valid_locations_delim+"directory"
 ]
 def get_valid_locations(locations, is_dir):
     if locations == None:
@@ -99,7 +101,7 @@ def get_valid_locations(locations, is_dir):
 
         generated = location+valid_locations_delim+loc_type
         if generated in base_registered:
-            pretty_print(f"The modification of {colorama.Fore.GREEN}{location}{colorama.Fore.WHITE} is off limits.", "err")
+            pretty_print(f"The modification of {location_err_prefix} is off limits.", "err")
             continue
 
         valid.append(generated)
@@ -108,8 +110,7 @@ def get_valid_locations(locations, is_dir):
 
 
 def setup():
-    backup_loc_name = "/usr/share/debian-files-backup"
-    if os.path.isfile(registry):
+    if os.path.isdir(backup_loc_name):
         return
 
     pretty_print("The backup script looks like it hasn't been properly set up yet.", "err")
