@@ -169,9 +169,7 @@ def compile():
     ##               Start backing up the files                 ##
     ##############################################################
 
-    backup_msg = "Copying all the registered files/directories into the backup..." #for the line seperators it needs it's own variable
-    pretty_print(backup_msg)
-    animate_print("="*len(backup_msg), 0.01)
+    pretty_print("Copying all the registered files/directories into the backup...")
     print("")
 
     if not args.dry_run:
@@ -270,7 +268,7 @@ def compile():
     ##                      All done!                           ##
     ##############################################################
     
-    print(Fore.WHITE+Style.BRIGHT+("="*len(backup_msg)+Style.RESET_ALL), end="\n\n")
+    print("\n")
     if args.dry_run and is_confirmed("Would you like to see the restore.sh script that was generated? (Since this was run in dry-run mode)"):
         script_tmp = tempfile.mkstemp()[1]
         with open(script_tmp, "w") as f:
