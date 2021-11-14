@@ -144,7 +144,7 @@ def setup():
 
     pretty_print(f"Creating directory {colorama.Fore.CYAN+backup_loc_name+colorama.Fore.RESET}...")
     system(f"cp -r . {backup_loc_name}")
-    system(f"chmod -R 711 {backup_loc_name}") #711 translates to rwx--x--x
+    system(f"chmod -R 755 {backup_loc_name}") #755 translates to rwxr-xr-x
 
 
     backup_file_name = "/usr/bin/backup"
@@ -155,7 +155,7 @@ def setup():
     pretty_print(f"Creating file {colorama.Fore.CYAN+backup_file_name+colorama.Fore.RESET}..")
     with open(backup_file_name, "w") as f:
         f.write(f"export {backup_true_directory_var}=\"${{PWD}}\" && cd {backup_loc_name} && sudo -E ./backup.py \"$@\" && cd ${{{backup_true_directory_var}}}")
-        system(f"chmod 711 '{backup_file_name}'")
+        system(f"chmod 755 '{backup_file_name}'")
         
     system(f"{backup_file_name} -f {backup_file_name}") #so the backup file stays preserved
     pretty_print("Setup has successfully completed :)")
