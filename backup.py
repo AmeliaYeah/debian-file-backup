@@ -46,13 +46,14 @@ do_checks()
 #list the contents of the registry and exit if asked to
 if args.list:
     list_tmp = tempfile.mkstemp()[1]
-    system(f"chmod 744 '{list_tmp}'")
+    system(f"chmod 744 '{list_tmp}'") #rwxr--r--
     with open(registry, "r") as f:
         with open(list_tmp, "w") as tmp:
             tmp.write("\n".join([line.strip().split(valid_locations_delim)[0] for line in f.readlines()]))
 
     system(f"sudo -u {os.environ['SUDO_USER']} vim {list_tmp}")
     os.remove(list_tmp)
+    exit()
 
 
 
