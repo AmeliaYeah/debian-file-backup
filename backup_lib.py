@@ -89,7 +89,7 @@ def parse_shorthand_directory(dir):
 valid_locations_delim = ">>SPLIT<<"
 base_registered = [
     registry+valid_locations_delim+"file",
-    "/etc/apt"+valid+locations+delim+"directory",
+    "/etc/apt"+valid_locations_delim+"directory",
     backup_loc_name+valid_locations_delim+"directory"
 ]
 def get_valid_locations(locations, is_dir):
