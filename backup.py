@@ -242,7 +242,7 @@ def compile():
         print("\n")
         format_install_section("apt install -y", to_install)
         if len(not_found) > 0:
-            restore_script_buffer += f"\necho 'The following packages were determined to not be in the local repository list: {Fore.GREEN+Style.BRIGHT}{', '.join(not_found)}{Style.RESET_ALL}. Maybe you got them externally?'"
+            restore_script_buffer += f"\necho 'The following packages were determined to not be in the local repository list: {Fore.GREEN+Style.BRIGHT}{', '.join(not_found)}{Style.RESET_ALL}. Maybe you got them externally?'\nread -p 'Press enter to continue: ' dummy_var"
     else:
         restore_script_buffer += "\napt install -y [all installed packages]"
 
