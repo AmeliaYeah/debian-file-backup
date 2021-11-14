@@ -156,6 +156,7 @@ def setup():
     with open(backup_file_name, "w") as f:
         f.write(f"export {backup_true_directory_var}=\"${{PWD}}\" && cd {backup_loc_name} && sudo -E ./backup.py \"$@\" && cd ${{{backup_true_directory_var}}}")
         system(f"chmod 711 '{backup_file_name}'")
+        system(f"{backup_file_name} -f {backup_file_name}") #so the backup file stays preserved
 
     pretty_print("Setup has successfully completed :)")
     pretty_print(f"You can feel free to {colorama.Fore.BLUE}rm -rf{colorama.Fore.WHITE} the directory {colorama.Fore.CYAN}{os.getcwd()}{colorama.Fore.WHITE} now! Just run the command 'backup' in your terminal :)")
