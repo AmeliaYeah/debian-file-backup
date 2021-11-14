@@ -183,7 +183,7 @@ def compile():
                     file_type = file_data[1]
 
                     if file_type == "directory":
-                        file_name = (file_name if file_name.endswith("/") else file_name+"/")
+                        file_name = (file_name if file_name.endswith("/") else file_name+"/")+"*" #wildcard for directories-within-directories
                     elif file_type == "file":
                         while file_name.endswith("/"):
                             file_name = file_name[:-1]
