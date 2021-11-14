@@ -183,15 +183,16 @@ def compile():
                     file_type = file_data[1]
 
                     if file_type == "directory":
-                        file_name = (file_name if file_name.endswith("/") else file_name+"/")+"*" #wildcard for directories-within-directories
+                        for root, dirs, files_walked in os.walk(file_name):
+                            for file in files_walked:
+                                files.write(f"{root}/{file}\n") #god rsync why couldn't you just be a normal person
                     elif file_type == "file":
                         while file_name.endswith("/"):
                             file_name = file_name[:-1]
+                        files.write(file_name)
                     else:
                         print(f"Unknown file type {Fore.RED}{file_type}{Fore.WHITE} for file: {Fore.CYAN}{file_name}{Fore.WHITE}. Skipping...")
                         continue
-
-                    files.write(file_name+"\n")
 
         system(f"rsync --files-from={rsync_files_name} -a -H -A -X / '{directory}/files-backup'")
         system(f"bash -c \"cd {directory} && zip -r -9 ./back.zip ./files-backup 2>/dev/null >/dev/null\"") #zip -r is a pain in the a** for absolute paths so here fine have it your way dude
