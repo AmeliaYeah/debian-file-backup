@@ -189,7 +189,7 @@ def compile():
                     elif file_type == "file":
                         while file_name.endswith("/"):
                             file_name = file_name[:-1]
-                        files.write(file_name)
+                        files.write(file_name+"\n")
                     else:
                         print(f"Unknown file type {Fore.RED}{file_type}{Fore.WHITE} for file: {Fore.CYAN}{file_name}{Fore.WHITE}. Skipping...")
                         continue
