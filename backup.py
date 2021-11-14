@@ -202,12 +202,14 @@ def compile():
 
     
     restore_script_buffer += f"""#!/bin/bash
+    apt update
     apt install -y {' '.join(required_packages)}
     unzip back.zip
     rsync -avhu --progress ./files-backup /
 
     rm back.zip
     rm -rf ./files-backup
+    apt update
     """.replace("    ","") #look man idk why the tabs are included ugh
 
 
