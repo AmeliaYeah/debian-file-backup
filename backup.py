@@ -193,7 +193,7 @@ def compile():
 
                     files.write(file_name+"\n")
 
-        system(f"rsync --files-from={rsync_files_name} -HaAX / '{directory}/files-backup'")
+        system(f"rsync --files-from={rsync_files_name} -a -H -A -X / '{directory}/files-backup'")
         system(f"bash -c \"cd {directory} && zip -r -9 ./back.zip ./files-backup 2>/dev/null >/dev/null\"") #zip -r is a pain in the a** for absolute paths so here fine have it your way dude
         system(f"rm -rf '{directory+'/files-backup'}'")
         system(f"rm '{rsync_files_name}'")
