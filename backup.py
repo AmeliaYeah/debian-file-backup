@@ -1,8 +1,23 @@
 #!/usr/bin/python3
-import os, subprocess, tempfile
-from argparse import ArgumentParser
-from backup_lib import *
-from colorama import Fore, Style
+
+# good on you for reading the source code ;)
+# keep it up, it's good practice.
+
+import os
+try:
+    import subprocess, tempfile
+    from argparse import ArgumentParser
+    from backup_lib import *
+    from colorama import Fore, Style
+except:
+    print("Uh oh! Looks like you're missing a dependancy. Let me fix that for you...")
+    if os.system("pip3 install -r pip_requirements.txt") != 0:
+        print("DOUBLE UH OH! It appears something went wrong with execution. You're on your own for this one.")
+        exit()
+    else:
+        print("Done!! :)")
+        print("You can safely restart the python script now.")
+        exit()
 
 
 #handle arguments
@@ -90,7 +105,9 @@ handle_files_and_directories()
 
 
 #handle compiling the backups
+restore_script_buffer = ""
 def compile():
+    global restore_script_buffer
     if args.compile == None:
         return
 
@@ -100,7 +117,36 @@ def compile():
         return
 
     directory = directory_raw[0].split(valid_locations_delim)[0]+"/os_backup"
-    restore_script_buffer = "#!/bin/bash\n"
+    if os.path.isdir(directory):
+        if is_confirmed(f"The directory {Fore.CYAN}{directory}{Fore.WHITE} already exists. Do you wish to overwrite?"):
+            os.rmdir(directory)
+        else:
+            return
+    os.mkdir(directory)
+
+
+    def format_install_section(command, to_install):
+        global restore_script_buffer
+        seperator = "\n"+command+" "
+
+        restore_script_buffer += f"echo 'Running: {Fore.YELLOW+Style.BRIGHT}{command}{Style.RESET_ALL}'\nsleep 1"
+        install_chunks = []
+        maximum_chunk_length = 60 #amount of packages to install per 'install' line
+
+        current_chunk = []
+        register_chunk = lambda: install_chunks.append(" ".join(current_chunk))
+        for package in to_install:
+            if len(current_chunk) > maximum_chunk_length:
+                register_chunk()
+                current_chunk = []
+            else:
+                current_chunk.append(package)
+
+        if len(current_chunk) > 0:
+            register_chunk() #just to register the last one if it wasn't able to get registered by the for loop
+
+        restore_script_buffer += seperator+seperator.join(install_chunks)+"\n"
+
 
 
 
@@ -116,10 +162,65 @@ def compile():
     print("")
 
 
+
+
+
+    ##############################################################
+    ##               Start backing up the files                 ##
+    ##############################################################
+
+    backup_msg = "Copying all the registered files/directories into the backup..." #for the line seperators it needs it's own variable
+    pretty_print(backup_msg)
+    animate_print("="*len(backup_msg), 0.01)
+    print("")
+
+    if not args.dry_run:
+        rsync_files_name = "rsync_files.txt"
+        with open(registry, "r") as f:
+            files_raw = [line.strip() for line in f.readlines()]+base_registered
+            with open(rsync_files_name, "a") as files:
+                for file in files_raw:
+                    file_data = file.split(valid_locations_delim)
+                    file_name = file_data[0]
+                    file_type = file_data[1]
+
+                    if file_type == "directory":
+                        file_name = (file_name if file_name.endswith("/") else file_name+"/")
+                    elif file_type == "file":
+                        while file_name.endswith("/"):
+                            file_name = file_name[:-1]
+                    else:
+                        print(f"Unknown file type {Fore.RED}{file_type}{Fore.WHITE} for file: {Fore.CYAN}{file_name}{Fore.WHITE}. Skipping...")
+                        continue
+
+                    files.write(file_name+"\n")
+
+        system(f"rsync --files-from={rsync_files_name} -HaAX / '{directory}/files-backup'")
+        system(f"zip -r -9 '{directory}/back.zip' '{directory}/files-backup' 2>/dev/null >/dev/null")
+        system(f"rm -rf '{directory+'/files-backup'}'")
+        system(f"rm '{rsync_files_name}'")
+
+    
+    restore_script_buffer += f"""#!/bin/bash
+    apt install -y {' '.join(required_packages)}
+    unzip back.zip
+    rsync -avhu --progress ./files-backup /
+
+    rm back.zip
+    rm -rf ./files-backup
+    """.replace("    ","") #look man idk why the tabs are included ugh
+
+
+
+
+    ##############################################################
+    ##               Start backing up the repos                 ##
+    ##############################################################
+
     pretty_print("Beginning backup of APT local repository....")
-    restore_script_buffer += "apt install "
     if not args.dry_run:
         not_found = []
+        to_install = []
 
         apt_out = subprocess.check_output(["apt", "list", "--installed"], stderr=subprocess.DEVNULL)
         apt_list = apt_out.decode("ascii").split("\n")
@@ -131,69 +232,36 @@ def compile():
             if package == "Listing..." or package == "":
                 continue
 
-            if "[installed,local]" in package_data[1]: #check if the package was NOT installed from the repositories
+            if package_data[1].endswith("[installed,local]"): #check if the package was NOT installed from the repositories
                 not_found.append(package)
             else:
-                restore_script_buffer += package+" "
+                to_install.append(package)
 
         print("\n")
+        format_install_section("apt install -y", to_install)
         if len(not_found) > 0:
             restore_script_buffer += f"\necho 'The following packages were determined to not be in the local repository list: {Fore.GREEN+Style.BRIGHT}{', '.join(not_found)}{Style.RESET_ALL}. Maybe you got them externally?'"
     else:
-        restore_script_buffer += "[LIST OF ALL INSTALLED PACKAGES]"
-
+        restore_script_buffer += "\napt install -y [all installed packages]"
 
 
 
 
     pretty_print("Beginning backup of local PIP repository....")
-    restore_script_buffer += "\npip install "
     if not args.dry_run:
-        pip_packages = subprocess.check_output(["pip", "freeze"], stderr=subprocess.DEVNULL).decode("ascii").split("\n")
-        restore_script_buffer += " ".join([package.strip() for package in pip_packages])
+        pip_packages = subprocess.check_output(["pip", "freeze"], stderr=subprocess.DEVNULL).decode("ascii").split("\n")[:-1] #we skip the last element since it's just whitespace.
+        format_install_section("pip install",[package.strip() for package in pip_packages])
     else:
-        restore_script_buffer += "[LIST OF ALL PIP PACKAGES]"
+        restore_script_buffer += "\npip install [all pip packages]"
 
 
 
 
-    backup_msg = "Copying all the registered files/directories into the backup..." #for the line seperators it needs it's own variable
-    pretty_print(backup_msg)
-    animate_print("="*len(backup_msg), 0.001)
-    print("")
-    with open(registry, "r") as f:
-        files = [line.strip() for line in f.readlines()]+base_registered
-    for file_raw in files:
-        file_raw = file_raw.split(valid_locations_delim)
-        file = file_raw[0]
-        file_type = file_raw[1]
-
-        if file_type not in ["directory", "file"]:
-            pretty_print(f"Invalid file type {Fore.GREEN}{file_type}{Fore.WHITE} for file {Fore.CYAN}{file}{Fore.WHITE}", "err")
-            continue
-
-        parent_dir = directory+"/files-backup/"+"/".join(file.split("/")[:-1])
-        if not args.dry_run:
-            os.system(f"mkdir -p '{parent_dir}' 2>/dev/null >/dev/null") #we don't use os.mkdir() since the "-p" argument can't be specified that way
-            copy_arg = "-i" if file_type == "file" else "-ri"
-            system(f"cp {copy_arg} '{file}' '{parent_dir}'")
 
 
-        pretty_print(f"Successfully backed up {file_type} {Fore.CYAN}{file}{Fore.WHITE} to {Fore.YELLOW}{parent_dir}{Fore.WHITE}")
-
-    system(f"zip -r -9 '{directory}/back.zip' '{directory}/files-backup' 2>/dev/null >/dev/null")
-    system(f"rm -rf '{directory+'/files-backup'}'")
-
-    
-    #final finishing touches to the script
-    restore_script_buffer += """
-    unzip back.zip
-    rsync -avhu --progress ./files-backup /
-
-    rm back.zip
-    rm -rf ./files-backup
-    """.replace("    ","") #look man idk why the tabs are included ugh
-
+    ##############################################################
+    ##                      All done!                           ##
+    ##############################################################
     
     print(Fore.WHITE+Style.BRIGHT+("="*len(backup_msg)+Style.RESET_ALL), end="\n\n")
     if args.dry_run and is_confirmed("Would you like to see the restore.sh script that was generated? (Since this was run in dry-run mode)"):

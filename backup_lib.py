@@ -2,6 +2,7 @@ import colorama, time, sys, os
 registry = "/etc/debian-disk-backup.reg"
 backup_true_directory_var = "BACKUP_TRUE_PWD"
 backup_loc_name = "/usr/share/debian-files-backup"
+required_packages = ["vim", "zip", "rsync"]
 
 def pretty_print(msg, type=None):
     msg_icon = colorama.Fore.GREEN+"+"
@@ -71,9 +72,16 @@ def system(cmd):
 
 def parse_shorthand_directory(dir):
     #notice how we don't use os.getcwd(), but rather the "true directory" var specified previously?
-    dir = dir.replace("./", os.environ[backup_true_directory_var]+"/") #for the current-directory shorthand
-    dir = dir.replace("../", "/".join(os.environ[backup_true_directory_var].split("/")[:-1])+"/") #for the previous-directory shorthand
+    current_dir_raw = os.environ[backup_true_directory_var]
+    current_dir = current_dir_raw if not current_dir_raw.endswith("/") else current_dir_raw[:-1] #remove trailing slash
+
+    #NOTE: important that "../" checks go before "./" checks, since...yeah.
+    dir = dir.replace("../", "/".join(current_dir.split("/")[:-1])+"/") #for the previous-directory shorthand
+    dir = dir.replace("./", current_dir+"/") #for the current-directory shorthand
     dir = dir.replace("~/", os.environ["HOME"]+"/") #just guess
+
+    if not dir.startswith("/"): #they're likely using a file in the CWD
+        dir = f"{current_dir}/{dir}"
 
     return dir
 
@@ -124,13 +132,13 @@ def setup():
 
 
     pretty_print("Performing a sanity check for all the required debian packages...")
-    for required in ["vim", "zip", "rsync"]:
+    for required in required_packages:
         pretty_print(f"Checking package {colorama.Fore.BLUE}{required}{colorama.Fore.WHITE}...")
         try:
             system(f"dpkg -s {required} 2>/dev/null >/dev/null")
         except:
             pretty_print("Package: "+colorama.Fore.YELLOW+required+colorama.Fore.RED+" does not exist!", "warn")
-            system(f"apt install {required}")
+            system(f"apt install -y {required}")
 
 
 
