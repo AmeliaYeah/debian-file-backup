@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import os, subprocess, tempfile
 from argparse import ArgumentParser
-from .backup_lib import *
+from backup_lib import *
 from colorama import Fore, Style
 
 
