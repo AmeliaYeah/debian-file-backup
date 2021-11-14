@@ -195,7 +195,7 @@ def compile():
 
                     files.write(file_name+"\n")
 
-        system(f"rsync --files-from={rsync_files_name} -HaAX / files-backup")
+        system(f"rsync --files-from={rsync_files_name} -HaAX / '{directory}/files-backup'")
         system(f"zip -r -9 '{directory}/back.zip' '{directory}/files-backup' 2>/dev/null >/dev/null")
         system(f"rm -rf '{directory+'/files-backup'}'")
         system(f"rm '{rsync_files_name}'")
@@ -203,7 +203,7 @@ def compile():
     
     restore_script_buffer += f"""#!/bin/bash
     if [ "$EUID" -ne 0 ]
-        then echo "Please run as root"
+        then echo '{Fore.RED}Please run as root{Style.RESET_ALL}'
         exit
     fi
 
