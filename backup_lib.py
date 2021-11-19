@@ -2,7 +2,7 @@ import colorama, time, sys, os
 registry = "/etc/debian-disk-backup.reg"
 backup_true_directory_var = "BACKUP_TRUE_PWD"
 backup_loc_name = "/usr/share/debian-files-backup"
-required_packages = ["vim", "zip", "rsync"]
+required_packages = ["vim", "zip", "rsync", "git", "python3", "python3-pip", "sudo"]
 
 def pretty_print(msg, type=None):
     msg_icon = colorama.Fore.GREEN+"+"
@@ -89,8 +89,7 @@ def parse_shorthand_directory(dir):
 valid_locations_delim = ">>SPLIT<<"
 base_registered = [
     registry+valid_locations_delim+"file",
-    "/etc/apt"+valid_locations_delim+"directory",
-    backup_loc_name+valid_locations_delim+"directory"
+    "/etc/apt"+valid_locations_delim+"directory"
 ]
 def get_valid_locations(locations, is_dir):
     if locations == None:
@@ -157,7 +156,6 @@ def setup():
         f.write(f"export {backup_true_directory_var}=\"${{PWD}}\" && cd {backup_loc_name} && sudo -E ./backup.py \"$@\" && cd ${{{backup_true_directory_var}}}")
         system(f"chmod 755 '{backup_file_name}'")
         
-    system(f"{backup_file_name} -f {backup_file_name}") #so the backup file stays preserved
     pretty_print("Setup has successfully completed :)")
     pretty_print(f"You can feel free to {colorama.Fore.BLUE}rm -rf{colorama.Fore.WHITE} the directory {colorama.Fore.CYAN}{os.getcwd()}{colorama.Fore.WHITE} now! Just run the command 'backup' in your terminal :)")
     exit()

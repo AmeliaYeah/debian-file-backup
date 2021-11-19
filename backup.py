@@ -5,7 +5,7 @@
 
 import os
 try:
-    import subprocess, tempfile
+    import subprocess, tempfile, sys
     from argparse import ArgumentParser
     from backup_lib import *
     from colorama import Fore, Style
@@ -15,8 +15,8 @@ except:
         print("DOUBLE UH OH! It appears something went wrong with execution. You're on your own for this one.")
         exit()
     else:
-        print("Done!! :)")
-        print("You can safely restart the python script now.")
+        print("Done!! Will restart now :)")
+        os.system(f"./backup.py {' '.join(sys.argv)}") #restart the program
         exit()
 
 
@@ -116,12 +116,7 @@ def compile():
     if directory_raw == []:
         return
 
-    directory = directory_raw[0].split(valid_locations_delim)[0]+"/os_backup"
-    if os.path.isdir(directory):
-        if is_confirmed(f"The directory {Fore.CYAN}{directory}{Fore.WHITE} already exists. Do you wish to overwrite?"):
-            os.rmdir(directory)
-        else:
-            return
+    directory = directory_raw[0].split(valid_locations_delim)[0]
     os.mkdir(directory)
 
 
@@ -201,19 +196,42 @@ def compile():
 
     
     restore_script_buffer += f"""#!/bin/bash
+    #check if user is root
     if [ "$EUID" -ne 0 ]
         then echo '{Fore.RED}Please run as root{Style.RESET_ALL}'
         exit
     fi
 
+    #restore their files (and ensure the dependancies are installed)
     apt update
     apt install -y {' '.join(required_packages)}
     unzip back.zip
     rsync -avhu --progress ./files-backup /
 
+    #clean up
     rm back.zip
     rm -rf ./files-backup
     apt update
+
+
+    #check for internet connection
+    ifconfig
+    read -p 'Press enter when you have ensured that this device is connected to the internet.' dummy_var
+    clear
+
+    #setup my backup script
+    git clone https://github.com/AmeliaYeah/debian-file-backup
+    cd debian-file-backup
+    chmod +x ./backup.py
+    pip3 install -r pip_requirements.txt
+    sudo ./backup.py
+
+    #clean up the backup script repo
+    cd ..
+    rm -rf debian-file-backup
+
+
+    #handle restoring all the packages that were installed in the old system
     """.replace("    ","") #look man idk why the tabs are included ugh
 
 
@@ -268,6 +286,14 @@ def compile():
     ##############################################################
     ##                      All done!                           ##
     ##############################################################
+
+    restore_script_buffer += f"""
+
+    echo '{Fore.GREEN+Style.BRIGHT}System restored :D{Style.RESET_ALL}'
+    current_dir=${{PWD}}
+    cd ..
+    rm -rf ${{current_dir}}
+    """.replace("    ","") #footer
     
     print("\n")
     if args.dry_run and is_confirmed("Would you like to see the restore.sh script that was generated? (Since this was run in dry-run mode)"):
