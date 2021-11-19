@@ -286,14 +286,6 @@ def compile():
     ##############################################################
     ##                      All done!                           ##
     ##############################################################
-
-    restore_script_buffer += f"""
-
-    echo '{Fore.GREEN+Style.BRIGHT}System restored :D{Style.RESET_ALL}'
-    current_dir=${{PWD}}
-    cd ..
-    rm -rf ${{current_dir}}
-    """.replace("    ","") #footer
     
     print("\n")
     if args.dry_run and is_confirmed("Would you like to see the restore.sh script that was generated? (Since this was run in dry-run mode)"):
