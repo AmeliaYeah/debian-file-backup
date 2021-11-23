@@ -117,9 +117,6 @@ def compile():
         return
 
     directory = directory_raw[0].split(valid_locations_delim)[0]
-    os.mkdir(directory)
-
-
     def format_install_section(command, to_install):
         global restore_script_buffer
         seperator = "\n"+command+" "
