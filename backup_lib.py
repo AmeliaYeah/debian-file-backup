@@ -83,6 +83,9 @@ def parse_shorthand_directory(dir):
     if not dir.startswith("/"): #they're likely using a file in the CWD
         dir = f"{current_dir}/{dir}"
 
+    if dir.endswith("/"):
+        dir = dir[:-1] #remove trailing slash
+
     return dir
 
 
