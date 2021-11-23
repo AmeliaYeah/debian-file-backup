@@ -151,7 +151,7 @@ def setup():
 
     backup_file_name = "/usr/bin/backup"
     while os.path.isfile(backup_file_name):
-        if not is_confirmed(f"The file {colorama.Fore.CYAN+backup_file_name+colorama.Fore.RESET} already exists. Would you like to overwrite it?", False):
+        if not is_confirmed(f"The file {colorama.Fore.CYAN+backup_file_name+colorama.Fore.WHITE} already exists. Would you like to overwrite it?", False):
             backup_file_name = "/usr/bin/" + input("Please enter a new name for the file: /usr/bin/").strip()
         else:
             break
