@@ -202,7 +202,7 @@ def compile():
     #restore their files (and ensure the dependancies are installed)
     apt update
     apt install -y {' '.join(required_packages)}
-    unzip back.zip
+    unzip back.zip -X -K
     rsync -avhu --progress ./files-backup /
 
     #clean up
