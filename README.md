@@ -9,3 +9,5 @@ It also handles automatically backing up your entire apt and pip repositories (I
 All-in-all: It's pretty straightforward, but you might be able to make good use of it ;)
 
 *Note:* This **ONLY** works with debian. Though, it's possible to make it work with other Linux distributions provided you fix the dependancy on apt. It was designed for systems using the linux kernel however, so Mac and Windows users; you're out of luck here.
+
+**IMPORTANT:** Make sure that, upon doing `zip -v | head -n 2`, it says you are using _Info-Zip_. Otherwise, file permissions being preserved might not be guaranteed.
